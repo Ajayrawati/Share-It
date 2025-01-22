@@ -1,7 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share/src/transfer.dart';
 
 class FlutterDemoFilePicker extends StatefulWidget {
   const FlutterDemoFilePicker({super.key});
@@ -18,21 +19,38 @@ class _FlutterDemoFilePickerState extends State<FlutterDemoFilePicker> {
         title: Text("File Picker"),
       ),
       body: Center(
-        child: Container(
-          child: ElevatedButton(onPressed: pickFile, child: Text("Click")),
+        child: IconButton(
+          onPressed: pickFile,
+          icon: Image.asset(
+            'images/59966.jpg', // Ensure this image is in assets folder
+            width: 40, // Adjusted size
+            height: 40,
+          ),
         ),
       ),
     );
   }
 
   Future<void> pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    PermissionStatus status = await Permission.storage.request();
+    if (status.isGranted) {
+      print("Granted");
 
-    if (result != null) {
-      File file = File(result.files.single.path!);
-      print(file.path);
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(allowMultiple: true);
+
+      if (result != null && result.files.isNotEmpty) {
+        // Navigate only if files are selected
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => Transfer(files: result.files)),
+        );
+      } else {
+        print("No file selected");
+      }
     } else {
-      print("No such file selected");
+      print("Storage Permission Denied");
     }
   }
 }
